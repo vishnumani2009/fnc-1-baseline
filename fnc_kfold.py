@@ -32,24 +32,27 @@ if __name__ == "__main__":
     parse_params()
 
     d = DataSet()
+    print("got data")
     folds,hold_out = kfold_split(d,n_folds=10)
     fold_stances, hold_out_stances = get_stances_for_folds(d,folds,hold_out)
 
     Xs = dict()
     ys = dict()
 
+    print("Load/Precompute all features now")
     # Load/Precompute all features now
     X_holdout,y_holdout = generate_features(hold_out_stances,d,"holdout")
     for fold in fold_stances:
         Xs[fold],ys[fold] = generate_features(fold_stances[fold],d,str(fold))
 
-
+    print("got fold")
     best_score = 0
     best_fold = None
 
 
     # Classifier for each fold
     for fold in fold_stances:
+        print("Folds")
         ids = list(range(len(folds)))
         del ids[fold]
 
