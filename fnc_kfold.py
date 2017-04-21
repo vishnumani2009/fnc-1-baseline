@@ -1,5 +1,5 @@
 import sys
-import numpy as np
+import numpy as np,io
 
 from sklearn.ensemble import GradientBoostingClassifier
 from feature_engineering import refuting_features, polarity_features, hand_features, gen_or_load_feats
@@ -10,6 +10,25 @@ from utils.score import report_score, LABELS, score_submission
 
 from utils.system import parse_params, check_version
 
+#keras imports
+from keras.models import Sequential
+from keras.layers import Dense, Embedding,Activation,Dropout
+from keras.layers import LSTM
+from keras.utils.np_utils import to_categorical
+
+def getmlpmodel(max_words):
+    print('Building model...')
+    model = Sequential()
+    model.add(Dense(512, input_shape=(max_words,)))
+    model.add(Activation('relu'))
+    model.add(Dropout(0.5))
+    model.add(Dense(4))
+    model.add(Activation('softmax'))
+
+    model.compile(loss='categorical_crossentropy',
+                  optimizer='adam',
+                  metrics=['accuracy'])
+    return model
 
 def generate_features(stances,dataset,name):
     h, b, y = [],[],[]
@@ -28,7 +47,7 @@ def generate_features(stances,dataset,name):
     return X,y
 
 if __name__ == "__main__":
-    check_version()
+    #check_version()
     parse_params()
 
     d = DataSet()
@@ -62,11 +81,24 @@ if __name__ == "__main__":
         X_test = Xs[fold]
         y_test = ys[fold]
 
-        clf = GradientBoostingClassifier(n_estimators=200, random_state=14128, verbose=True)
-        clf.fit(X_train, y_train)
+        y_train = to_categorical(y_train, 4)
+        y_test = to_categorical(y_test, 4)
+        print(y_train)
+        print(X_train.shape)
+        #sys.exit(0)
 
-        predicted = [LABELS[int(a)] for a in clf.predict(X_test)]
-        actual = [LABELS[int(a)] for a in y_test]
+
+        #clf = GradientBoostingClassifier(n_estimators=200, random_state=14128, verbose=True)
+        clf=getmlpmodel(X_train.shape[1])
+        #clf.fit(X_train, y_train)
+        clf.fit(X_train, y_train,
+                  batch_size=32,
+                  nb_epoch=20,
+                  verbose=1)
+                  #validation_data=(X_test, y_test))
+
+        predicted = [LABELS[int(np.argmax(a))] for a in clf.predict(X_test)]
+        actual = [LABELS[int(np.argmax(a))] for a in y_test]
 
         fold_score, _ = score_submission(actual, predicted)
         max_fold_score, _ = score_submission(actual, actual)

@@ -1,5 +1,5 @@
 from csv import DictReader
-
+import io
 
 class DataSet():
     def __init__(self, path="fnc-1"):
@@ -28,9 +28,9 @@ class DataSet():
 
     def read(self,filename):
         rows = []
-        with open(self.path + "/" + filename, "r", encoding='utf-8') as table:
+        print(self.path + "/" + filename)
+        with open(self.path + "/" + filename, "r") as table:
             r = DictReader(table)
-
             for line in r:
                 rows.append(line)
         return rows
